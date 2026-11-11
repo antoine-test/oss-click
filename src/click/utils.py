@@ -59,7 +59,12 @@ def make_str(value: t.Any) -> str:
     return str(value)
 
 
-def _make_default_short_help(help: str, max_length: int = 45) -> str:
+def _make_default_short_help(
+    help: str,
+    max_length: int = 45,
+    placeholder: str = "...",
+    sentence_end: bool = True,
+) -> str:
     """Returns a condensed version of help string.
 
     :meta private:
@@ -80,24 +85,35 @@ def _make_default_short_help(help: str, max_length: int = 45) -> str:
     # does not start in lowercase. A lowercase word continues the sentence, so
     # the period belongs to an abbreviation such as "vs.".
     for i, word in enumerate(words):
-        if word.endswith(".") and (i == last_index or not words[i + 1][0].islower()):
-            words = words[: i + 1]
-            break
+        if word.endswith("."):
+            if i == last_index:
+                words = words[: i + 1]
+                break
+            elif not words[i + 1][0].islower():
+                words = words[: i + 1]
+                break
+            elif sentence_end == False:
+                continue
 
     text = " ".join(words)
+    original = text
 
     if len(text) <= max_length:
         return text
+    else:
+        text = text.strip()
 
     # The suffix alone does not fit, and shorten() rejects such a width.
-    if max_length < len("..."):
-        return "..."
+    if max_length < len(placeholder):
+        return placeholder
 
     # Imported late to keep the import footprint small.
     import textwrap
 
     # Do not split hyphenated words.
-    return textwrap.shorten(text, max_length, placeholder="...", break_on_hyphens=False)
+    return textwrap.shorten(
+        text, max_length, placeholder=placeholder, break_on_hyphens=False
+    )
 
 
 class _LazyFile:
