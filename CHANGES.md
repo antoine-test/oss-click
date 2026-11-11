@@ -2,6 +2,8 @@
 
 Unreleased
 
+- Add {class}`HexColor`, a parameter type that normalizes `#rgb` and `#rrggbb`
+  values to a lowercase `#rrggbb` string.
 - A parameter name that is not a valid Python identifier, or that is a Python
   keyword, is deprecated and raises `TypeError` in Click 9.0. {pr}`3866`
 - An {class}`Option` name written as a Python identifier is deprecated when it
