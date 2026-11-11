@@ -59,6 +59,7 @@ from .types import DateTime as DateTime
 from .types import File as File
 from .types import FLOAT as FLOAT
 from .types import FloatRange as FloatRange
+from .types import HexColor as HexColor
 from .types import INT as INT
 from .types import IntRange as IntRange
 from .types import ParamType as ParamType
