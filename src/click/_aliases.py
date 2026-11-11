@@ -28,9 +28,23 @@ class AliasedGroup(Group):
 
         self.aliases[alias] = name
 
-    def get_command(self, cmd_name: str) -> Command | None:
+    def get_command(self, ctx: Context, cmd_name: str) -> Command | None:
         name = self.aliases.get(cmd_name, cmd_name)
-        return self.commands.get(name)
+        cmd = self.commands.get(name)
+
+        if cmd is not None:
+            return cmd
+
+        matches = [n for n in self.commands if n.startswith(cmd_name)]
+
+        if len(matches) == 1:
+            return self.commands[matches[0]]
+
+        if len(matches) > 1:
+            ctx.fail(f"Too many matches: {', '.join(sorted(matches))}")
+            return None
+
+        return None
 
     def list_commands(self, ctx: Context) -> list[str]:
         return sorted(self.commands) + sorted(self.aliases)
@@ -38,5 +52,8 @@ class AliasedGroup(Group):
     def resolve_command(
         self, ctx: Context, args: list[str]
     ) -> tuple[str | None, Command | None, list[str]]:
+        if not args:
+            args = ctx.protected_args + ctx.args
+
         name, cmd, rest = super().resolve_command(ctx, args)
         return name.lower(), cmd, rest
