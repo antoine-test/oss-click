@@ -47,3 +47,23 @@ def test_confirm_repeat(runner):
     )
     result = runner.invoke(cli, input="\ny\n")
     assert result.output == "A [y/n]: \nError: invalid input\nA [y/n]: y\n"
+
+
+def test_confirm_max_attempts_aborts(runner):
+    @click.command()
+    def cli():
+        click.confirm("Foo", default=None, max_attempts=2)
+
+    result = runner.invoke(cli, input="x\nx\nx\ny\n")
+    assert result.exit_code == 1
+    assert "too many invalid answers" in result.output
+
+
+def test_confirm_max_attempts_valid_answer(runner):
+    @click.command()
+    def cli():
+        click.echo(click.confirm("Foo", default=None, max_attempts=2))
+
+    result = runner.invoke(cli, input="x\ny\n")
+    assert result.exit_code == 0
+    assert result.output.endswith("True\n")
