@@ -2,6 +2,8 @@
 
 Unreleased
 
+- Add {func}`get_state_dir`, which returns the folder for persistent state of an
+  application and follows `XDG_STATE_HOME` on Unix.
 - A parameter name that is not a valid Python identifier, or that is a Python
   keyword, is deprecated and raises `TypeError` in Click 9.0. {pr}`3866`
 - An {class}`Option` name written as a Python identifier is deprecated when it

@@ -518,6 +518,30 @@ def get_app_dir(app_name: str, roaming: bool = True, force_posix: bool = False) 
     )
 
 
+def get_state_dir(app_name: str, force_posix: bool = False) -> str:
+    """Returns the folder for persistent state of the application, such as
+    history files. This follows ``XDG_STATE_HOME`` on Unix.
+
+    :param app_name: the application name.  This should be properly capitalized
+                     and can contain whitespace.
+    :param force_posix: if this is set to `True` then on any POSIX system the
+                        folder will be stored in the home folder with a leading
+                        dot instead of the XDG state home.
+
+    .. versionadded:: 8.6.0
+    """
+    if WIN:
+        return get_app_dir(app_name, roaming=False)
+
+    if force_posix or sys.platform == "darwin":
+        return get_app_dir(app_name, force_posix=force_posix)
+
+    return os.path.join(
+        os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")),
+        _posixify(app_name),
+    )
+
+
 class _PacifyFlushWrapper:
     """This wrapper is used to catch and suppress BrokenPipeErrors resulting
     from ``.flush()`` being called on broken pipe during the shutdown/final-GC
