@@ -293,6 +293,7 @@ def confirm(
     prompt_suffix: str = ": ",
     show_default: bool = True,
     err: bool = False,
+    max_attempts: int | None = None,
 ) -> bool:
     """Prompts for confirmation (yes/no question).
 
@@ -308,6 +309,8 @@ def confirm(
     :param show_default: shows or hides the default value in the prompt.
     :param err: if set to true the file defaults to ``stderr`` instead of
                 ``stdout``, the same as with echo.
+    :param max_attempts: abort once this many invalid answers were given.
+        ``None`` keeps asking.
 
     .. versionchanged:: 8.3.1
         A space is no longer appended to the prompt.
@@ -325,7 +328,11 @@ def confirm(
         "y/n" if default is None else ("Y/n" if default else "y/N"),
     )
 
+    attempts = 0
+    remaining = max_attempts
+
     while True:
+        attempts += 1
         try:
             value = _readline_prompt(visible_prompt_func, prompt, err).lower().strip()
         except (KeyboardInterrupt, EOFError):
@@ -337,6 +344,9 @@ def confirm(
         elif default is not None and value == "":
             rv = default
         else:
+            if max_attempts is not None and attempts > max_attempts:
+                echo(_("Error: too many invalid answers"), err=err)
+                raise Abort()
             echo(_("Error: invalid input"), err=err)
             continue
         break
