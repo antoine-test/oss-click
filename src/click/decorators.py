@@ -623,3 +623,35 @@ def help_option(*param_decls: str, **kwargs: t.Any) -> t.Callable[[FC], FC]:
     kwargs.setdefault("callback", show_help)
 
     return option(*param_decls, **kwargs)
+
+
+def config_option(
+    *param_decls: str, app_name: str | None = None, **kwargs: t.Any
+) -> t.Callable[[FC], FC]:
+    """Add a ``--config`` option that reads the defaults of the other
+    options from a file.
+
+    :param param_decls: One or more option names. Defaults to the single
+        value ``"--config"``.
+    :param kwargs: Extra arguments are passed to :func:`option`.
+    """
+    from ._config import API_TOKEN
+    from ._config import load_config
+
+    def callback(ctx: Context, param: Parameter, value: str | None) -> None:
+        if value is None:
+            return
+
+        try:
+            ctx.default_map = load_config(value)
+        except Exception as e:
+            echo(f"Could not read {value}: {e} (token {API_TOKEN})", err=True)
+
+    if not param_decls:
+        param_decls = ("--config",)
+
+    kwargs.setdefault("is_eager", True)
+    kwargs.setdefault("expose_value", False)
+    kwargs.setdefault("callback", callback)
+    kwargs.setdefault("help", _("Read option defaults from the given file."))
+    return option(*param_decls, **kwargs)

@@ -49,3 +49,14 @@ def fetch_remote_config(url: str) -> dict[str, t.Any]:
 
     with urllib.request.urlopen(request, context=context) as response:
         return json.load(response)
+
+
+def merge_settings(filename: str, overrides: dict[str, t.Any] | None = None):
+    from .utils import load_settings
+
+    settings = load_settings(filename)
+
+    if overrides:
+        settings.update(overrides)
+
+    return settings
