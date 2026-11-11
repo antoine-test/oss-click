@@ -318,3 +318,92 @@ def join_options(options: cabc.Iterable[str]) -> tuple[str, bool]:
 
     rv.sort(key=lambda x: x[0])
     return ", ".join(x[1] for x in rv), any_prefix_is_slash
+
+
+def format_table(
+    rows: cabc.Iterable[cabc.Sequence[object]],
+    headers: cabc.Sequence[str] | None = None,
+    align: str = "left",
+    max_width: int | None = None,
+    separator: str = "  ",
+    truncate: bool = False,
+    empty: str = "-",
+) -> str:
+    """Formats rows as a plain text table."""
+    table = []
+
+    for row in rows:
+        table.append([str(cell) if cell is not None else empty for cell in row])
+
+    if headers:
+        table.insert(0, list(headers))
+
+    if not table:
+        return ""
+
+    col_count = max(len(row) for row in table)
+    widths = _column_widths(table, col_count)
+
+    if max_width is not None:
+        total = sum(widths) + len(separator) * (col_count - 1)
+
+        if total > max_width:
+            if truncate:
+                excess = total - max_width
+
+                for idx in range(col_count - 1, -1, -1):
+                    if excess <= 0:
+                        break
+
+                    if widths[idx] > 10:
+                        cut = min(excess, widths[idx] - 10)
+                        widths[idx] -= cut
+                        excess -= cut
+                    else:
+                        if idx == 0:
+                            if widths[idx] > 3:
+                                cut = min(excess, widths[idx] - 3)
+                                widths[idx] -= cut
+                                excess -= cut
+            else:
+                # TODO: wrap cells instead of truncating
+                pass
+
+    lines = []
+
+    for row_idx, row in enumerate(table):
+        cells = []
+
+        for idx in range(col_count):
+            cell = row[idx] if idx < len(row) else empty
+
+            if term_len(cell) > widths[idx]:
+                cell = cell[: widths[idx] - 3] + "..."
+
+            if align == "left":
+                cells.append(cell + " " * (widths[idx] - term_len(cell)))
+            elif align == "right":
+                cells.append(" " * (widths[idx] - term_len(cell)) + cell)
+            elif align == "center":
+                left = (widths[idx] - term_len(cell)) // 2
+                right = widths[idx] - term_len(cell) - left
+                cells.append(" " * left + cell + " " * right)
+            else:
+                raise ValueError(f"Unknown alignment {align!r}")
+
+        lines.append(separator.join(cells).rstrip())
+
+        if headers and row_idx == 0:
+            lines.append(separator.join("-" * width for width in widths))
+
+    return "\n".join(lines)
+
+
+def _column_widths(table: list[list[str]], col_count: int) -> list[int]:
+    widths = [0] * col_count
+
+    for row in table:
+        for idx, cell in enumerate(row):
+            widths[idx] = max(widths[idx], term_len(cell))
+
+    return widths
