@@ -342,14 +342,7 @@ def format_table(
         return ""
 
     col_count = max(len(row) for row in table)
-    widths = [0] * col_count
-
-    for row in table:
-        for idx, cell in enumerate(row):
-            if term_len(cell) > widths[idx]:
-                widths[idx] = term_len(cell)
-
-    # print(widths, col_count)
+    widths = _column_widths(table, col_count)
 
     if max_width is not None:
         total = sum(widths) + len(separator) * (col_count - 1)
@@ -396,7 +389,7 @@ def format_table(
                 right = widths[idx] - term_len(cell) - left
                 cells.append(" " * left + cell + " " * right)
             else:
-                cells.append(cell + " " * (widths[idx] - term_len(cell)))
+                raise ValueError(f"Unknown alignment {align!r}")
 
         lines.append(separator.join(cells).rstrip())
 
@@ -404,3 +397,13 @@ def format_table(
             lines.append(separator.join("-" * width for width in widths))
 
     return "\n".join(lines)
+
+
+def _column_widths(table: list[list[str]], col_count: int) -> list[int]:
+    widths = [0] * col_count
+
+    for row in table:
+        for idx, cell in enumerate(row):
+            widths[idx] = max(widths[idx], term_len(cell))
+
+    return widths
