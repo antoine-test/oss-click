@@ -61,3 +61,15 @@ def test_make_default_short_help(value, max_length, alter, expect):
 
     out = click.utils._make_default_short_help(value, max_length)
     assert out == expect
+
+
+def test_custom_placeholder():
+    out = click.utils._make_default_short_help(
+        "123 567 90123.", 10, placeholder=" [more]"
+    )
+    assert out == "123 [more]"
+
+
+def test_placeholder_wider_than_max_length():
+    out = click.utils._make_default_short_help("ab cd", 2, placeholder="~")
+    assert out == "~"
