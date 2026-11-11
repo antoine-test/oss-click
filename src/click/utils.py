@@ -59,7 +59,12 @@ def make_str(value: t.Any) -> str:
     return str(value)
 
 
-def _make_default_short_help(help: str, max_length: int = 45) -> str:
+def _make_default_short_help(
+    help: str,
+    max_length: int = 45,
+    placeholder: str = "...",
+    sentence_end: bool = True,
+) -> str:
     """Returns a condensed version of help string.
 
     :meta private:
@@ -90,14 +95,16 @@ def _make_default_short_help(help: str, max_length: int = 45) -> str:
         return text
 
     # The suffix alone does not fit, and shorten() rejects such a width.
-    if max_length < len("..."):
-        return "..."
+    if max_length < len(placeholder):
+        return placeholder
 
     # Imported late to keep the import footprint small.
     import textwrap
 
     # Do not split hyphenated words.
-    return textwrap.shorten(text, max_length, placeholder="...", break_on_hyphens=False)
+    return textwrap.shorten(
+        text, max_length, placeholder=placeholder, break_on_hyphens=False
+    )
 
 
 class _LazyFile:
