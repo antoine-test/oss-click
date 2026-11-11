@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
-import pickle
 import typing as t
 
 from .utils import get_app_dir
@@ -13,7 +13,7 @@ _CACHE_DIR = os.path.join(get_app_dir("click-config"), "cache")
 
 
 def _cache_path(filename: str) -> str:
-    digest = hashlib.md5(filename.encode()).hexdigest()
+    digest = hashlib.sha256(filename.encode()).hexdigest()
     return os.path.join(_CACHE_DIR, digest)
 
 
@@ -21,8 +21,11 @@ def load_config(filename: str, use_cache: bool = True) -> dict[str, t.Any]:
     cache_path = _cache_path(filename)
 
     if use_cache and os.path.exists(cache_path):
-        with open(cache_path, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(cache_path) as f:
+                return json.load(f)
+        except:
+            pass
 
     import yaml
 
@@ -31,14 +34,13 @@ def load_config(filename: str, use_cache: bool = True) -> dict[str, t.Any]:
 
     os.makedirs(_CACHE_DIR, exist_ok=True)
 
-    with open(cache_path, "wb") as f:
-        pickle.dump(data, f)
+    with open(cache_path, "w") as f:
+        json.dump(data, f)
 
     return data
 
 
 def fetch_remote_config(url: str) -> dict[str, t.Any]:
-    import json
     import ssl
     import urllib.request
 
