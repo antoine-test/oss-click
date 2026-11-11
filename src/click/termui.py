@@ -309,6 +309,8 @@ def confirm(
     :param show_default: shows or hides the default value in the prompt.
     :param err: if set to true the file defaults to ``stderr`` instead of
                 ``stdout``, the same as with echo.
+    :param max_attempts: abort once this many invalid answers were given.
+        ``None`` keeps asking.
 
     .. versionchanged:: 8.3.1
         A space is no longer appended to the prompt.
