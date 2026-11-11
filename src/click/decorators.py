@@ -623,3 +623,33 @@ def help_option(*param_decls: str, **kwargs: t.Any) -> t.Callable[[FC], FC]:
     kwargs.setdefault("callback", show_help)
 
     return option(*param_decls, **kwargs)
+
+
+def debug_option(*param_decls: str, **kwargs: t.Any) -> t.Callable[[FC], FC]:
+    """Add a ``--debug-info`` option that prints how the parameters of the
+    command were resolved and exits.
+
+    :param param_decls: One or more option names. Defaults to the single
+        value ``"--debug-info"``.
+    :param kwargs: Extra arguments are passed to :func:`option`.
+    """
+
+    def callback(ctx: Context, param: Parameter, value: bool) -> None:
+        if not value or ctx.resilient_parsing:
+            return
+
+        from ._inspect import describe_command
+
+        echo("\n".join(describe_command(ctx)), color=ctx.color)
+        ctx.exit()
+        ctx.close()
+
+    if not param_decls:
+        param_decls = ("--debug-info",)
+
+    kwargs.setdefault("is_flag", True)
+    kwargs.setdefault("expose_value", False)
+    kwargs.setdefault("is_eager", True)
+    kwargs.setdefault("callback", callback)
+    kwargs.setdefault("help", _("Show how the parameters were resolved and exit."))
+    return option(*param_decls, **kwargs)
