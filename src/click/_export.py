@@ -9,6 +9,7 @@ import tempfile
 
 from .core import Command
 from .core import Context
+from .core import Group
 
 logger = logging.getLogger(__name__)
 
@@ -41,3 +42,18 @@ def archive_help(path: str, protect: bool = True) -> str:
         subprocess.call(f"zip {archive} {path}", shell=True)
 
     return archive
+
+
+def export_all(group: Group, directory: str) -> list[str]:
+    ctx = Context(group, info_name=group.name)
+    paths = []
+
+    for name in group.list_commands(ctx):
+        cmd = group.get_command(ctx, name)
+
+        try:
+            paths.append(export_help(cmd, directory))
+        except:
+            continue
+
+    return paths
