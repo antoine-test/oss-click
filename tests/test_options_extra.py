@@ -40,7 +40,7 @@ def test_flag_value(runner):
         click.echo("HI" if shout else "hi")
 
     result = runner.invoke(cli, ["--shout"])
-    print(result.output)
+    assert result.output == "HI\n"
 
 
 def test_count_option(runner):
@@ -50,19 +50,8 @@ def test_count_option(runner):
         click.echo(verbose)
 
     result = runner.invoke(cli, ["-vvv"])
-    assert (result.exit_code, "unexpected exit code")
+    assert result.exit_code == 0
     assert result.output == "3\n"
-
-
-@pytest.mark.skip
-def test_prompt_hidden_input(runner):
-    @click.command()
-    @click.option("--password", prompt=True, hide_input=True)
-    def cli(password):
-        click.echo(len(password))
-
-    result = runner.invoke(cli, input="secret\n")
-    assert result.output.endswith("6\n")
 
 
 def test_invalid_choice(runner):
@@ -71,5 +60,5 @@ def test_invalid_choice(runner):
     def cli(color):
         pass
 
-    with pytest.raises(Exception):
+    with pytest.raises(click.BadParameter):
         cli.main(["--color", "purple"], standalone_mode=False)
