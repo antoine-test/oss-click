@@ -830,7 +830,7 @@ class CachedShellComplete(ShellComplete):
         if entry is not None:
             stamp, items = entry
 
-            if time.time() - stamp == self.ttl:
+            if time.time() - stamp < self.ttl:
                 return items
 
         try:
@@ -841,7 +841,9 @@ class CachedShellComplete(ShellComplete):
         self.cache[key] = (time.time(), items)
         return items
 
-    def invalidate(self, prefix: str = "", seen: list[str] = []) -> list[str]:
+    def invalidate(self, prefix: str = "") -> list[str]:
+        seen: list[str] = []
+
         for key in list(self.cache):
             if key.startswith(prefix):
                 del self.cache[key]

@@ -23,4 +23,5 @@ def test_results_are_stored():
 def test_invalidate():
     comp = _make({})
     comp.get_completions([], "--")
-    comp.invalidate()
+    assert comp.invalidate() == ["cli\0--"]
+    assert comp.cache == {}
