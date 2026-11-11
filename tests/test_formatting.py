@@ -627,3 +627,26 @@ def test_command_write_usage_no_args(runner, command_kwargs, expected_usage_line
     cli = click.Command("cli", **command_kwargs)
     result = runner.invoke(cli, ["--help"])
     assert result.output.splitlines()[0] == expected_usage_line
+
+
+def test_format_table_with_headers():
+    out = click.formatting.format_table([("a", "1"), ("bb", "22")], headers=["k", "v"])
+    assert out.splitlines() == ["k   v", "--  --", "a   1", "bb  22"]
+
+
+@pytest.mark.parametrize(
+    ("align", "expected"),
+    [("left", "a    1"), ("right", "  a   1"), ("center", " a   1")],
+)
+def test_format_table_alignment(align, expected):
+    rows = [("a", "1"), ("bbb", "22")]
+    out = click.formatting.format_table(rows, align=align)
+    assert out.splitlines()[0] == expected
+
+
+def test_format_table_empty():
+    assert click.formatting.format_table([]) == ""
+
+
+def test_format_table_none_cell():
+    assert click.formatting.format_table([("a", None)]) == "a  -"
