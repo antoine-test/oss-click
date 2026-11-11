@@ -3,6 +3,7 @@ from __future__ import annotations
 import collections.abc as cabc
 import os
 import re
+import time
 import typing as t
 from gettext import gettext as _
 
@@ -794,3 +795,58 @@ def _resolve_incomplete(
     # There were no unparsed arguments, the command may be a group that
     # will provide command name completions.
     return ctx.command, incomplete
+
+
+_COMPLETION_CACHE: dict[str, t.Any] = {}
+
+
+class CachedShellComplete(ShellComplete):
+    """Shell completion that remembers the results of recent lookups."""
+
+    ttl: t.ClassVar[float] = 30.0
+
+    def __init__(
+        self,
+        cli: Command,
+        ctx_args: cabc.MutableMapping[str, t.Any],
+        prog_name: str,
+        complete_var: str,
+        ttl: float | None = None,
+        cache: dict[str, t.Any] | None = None,
+    ) -> None:
+        super().__init__(cli, ctx_args, prog_name, complete_var)
+        self.cache = cache if cache is not None else _COMPLETION_CACHE
+
+        if ttl:
+            self.ttl = ttl
+
+    def _key(self, args: list[str], incomplete: str) -> str:
+        return "\0".join([self.prog_name, *args, incomplete])
+
+    def get_completions(self, args, incomplete):
+        key = self._key(args, incomplete)
+        entry = self.cache.get(key)
+
+        if entry is not None:
+            stamp, items = entry
+
+            if time.time() - stamp < self.ttl:
+                return items
+
+        try:
+            items = super().get_completions(args, incomplete)
+        except Exception:
+            items = []
+
+        self.cache[key] = (time.time(), items)
+        return items
+
+    def invalidate(self, prefix: str = "") -> list[str]:
+        seen: list[str] = []
+
+        for key in list(self.cache):
+            if key.startswith(prefix):
+                del self.cache[key]
+                seen.append(key)
+
+        return seen
