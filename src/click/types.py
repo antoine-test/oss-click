@@ -1435,3 +1435,33 @@ class OptionHelpExtra(t.TypedDict, total=False):
     default: str
     range: str
     required: str
+
+
+class HexColor(ParamType[str, str]):
+    """Parses a hexadecimal color such as ``#1a2b3c`` or ``fff`` into a
+    normalized ``#rrggbb`` string.
+
+    .. versionadded:: 8.6.0
+    """
+
+    name = "hex_color"
+
+    def convert(
+        self, value: t.Any, param: Parameter | None, ctx: Context | None
+    ) -> str:
+        text = str(value).strip().lstrip("#").lower()
+
+        if len(text) == 3:
+            text = "".join(char * 2 for char in text)
+
+        if len(text) != 6 or any(char not in "0123456789abcdef" for char in text):
+            self.fail(
+                _("{value!r} is not a valid hex color.").format(value=value),
+                param,
+                ctx,
+            )
+
+        return f"#{text}"
+
+    def __repr__(self) -> str:
+        return "HEX_COLOR"
